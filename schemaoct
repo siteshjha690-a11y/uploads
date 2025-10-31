@@ -1,0 +1,59 @@
+{
+  "location": "eastus",
+  "kind": "Linux",
+  "properties": {
+    "dataCollectionEndpointId": "/subscriptions/<subscription-id>/resourceGroups/<rg-name>/providers/Microsoft.Insights/dataCollectionEndpoints/<endpoint-name>",
+    "streamDeclarations": {
+      "Custom-Octopuslog_CL": {
+        "columns": [
+          {
+            "name": "TimeGenerated",
+            "type": "DateTime"
+          },
+          {
+            "name": "EventId",
+            "type": "String"
+          },
+          {
+            "name": "Username",
+            "type": "String"
+          },
+          {
+            "name": "Category",
+            "type": "String"
+          },
+          {
+            "name": "Summary",
+            "type": "String"
+          },
+          {
+            "name": "OccurredAt",
+            "type": "DateTime"
+          },
+          {
+            "name": "Project",
+            "type": "String"
+          }
+        ]
+      }
+    },
+    "destinations": {
+      "logAnalytics": [
+        {
+          "name": "la-workspace",
+          "workspaceResourceId": "/subscriptions/<subscription-id>/resourceGroups/<rg-name>/providers/Microsoft.OperationalInsights/workspaces/<workspace-name>"
+        }
+      ]
+    },
+    "dataFlows": [
+      {
+        "streams": [
+          "Custom-Octopuslog_CL"
+        ],
+        "destinations": [
+          "la-workspace"
+        ]
+      }
+    ]
+  }
+}
