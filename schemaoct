@@ -57,3 +57,5 @@
     ]
   }
 }
+
+Error: User provided schema is invalid, due to - HttpClient: Response status code does not indicate success - 400 (Bad Request), due to reason - [Table validation failed with following 1 errors: Columns 'type' are invalid or reserved and is not allowed in customer columns.]. Operation Id: '1b37ce849eb29b220a0d9fe23ddb7fa9'
