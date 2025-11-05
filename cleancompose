@@ -1,12 +1,12 @@
 [
   {
-    "EventId": "@items('For_each')?['Id']",
-    "Category": "@items('For_each')?['Category']",
-    "Occurred": "@{formatDateTime(items('For_each')?['Occurred'],'yyyy-MM-ddTHH:mm:ssZ')}",
-    "Username": "@items('For_each')?['Username']",
-    "Message": "@items('For_each')?['Message']",
-    "RelatedDocs": "@{join(items('For_each')?['RelatedDocumentIds'], ',')}",
-    "IsService": "@items('For_each')?['IsService']",
-    "UserAgent": "@items('For_each')?['UserAgent']"
+    "EventId": "@item()?['Id']",
+    "Category": "@item()?['Category']",
+    "Occurred": "@{formatDateTime(item()?['Occurred'],'yyyy-MM-ddTHH:mm:ssZ')}",
+    "Username": "@item()?['Username']",
+    "Message": "@item()?['Message']",
+    "RelatedDocs": "@{join(item()?['RelatedDocumentIds'], ',')}",
+    "IsService": "@item()?['IsService']",
+    "UserAgent": "@item()?['UserAgent']"
   }
 ]
