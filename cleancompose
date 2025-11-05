@@ -2,7 +2,7 @@
   {
     "EventId": "@item()?['Id']",
     "Category": "@item()?['Category']",
-    "Occurred": "@{if(empty(item()?['Occurred']), utcNow(), formatDateTime(item()?['Occurred'], 'yyyy-MM-ddTHH:mm:ssZ'))}",
+    "Occurred": "@{if(empty(item()?['Occurred']), utcNow(), formatDateTime(item()?['Occurred'],'yyyy-MM-ddTHH:mm:ssZ'))}",
     "Username": "@item()?['Username']",
     "Message": "@item()?['Message']",
     "RelatedDocs": "@{if(empty(item()?['RelatedDocumentIds']), '', join(item()?['RelatedDocumentIds'], ','))}",
