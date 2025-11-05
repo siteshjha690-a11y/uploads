@@ -1,0 +1,103 @@
+{
+  "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {},
+  "triggers": {
+    "Recurrence": {
+      "type": "Recurrence",
+      "recurrence": {
+        "frequency": "Minute",
+        "interval": 5
+      }
+    }
+  },
+  "actions": {
+    "HTTP_Get_Octopus_Events": {
+      "type": "Http",
+      "inputs": {
+        "method": "GET",
+        "uri": "https://<YourOctopusURL>/api/events?take=1000",
+        "headers": {
+          "X-Octopus-ApiKey": "<Your-Octopus-API-Key>"
+        }
+      },
+      "runAfter": {}
+    },
+    "Parse_JSON": {
+      "type": "ParseJson",
+      "inputs": {
+        "content": "@body('HTTP_Get_Octopus_Events')",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "Items": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "Id": { "type": "string" },
+                  "Category": { "type": "string" },
+                  "Occurred": { "type": "string" },
+                  "Username": { "type": "string" },
+                  "Message": { "type": "string" },
+                  "RelatedDocumentIds": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                  },
+                  "IsService": { "type": "boolean" },
+                  "UserAgent": { "type": "string" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "runAfter": {
+        "HTTP_Get_Octopus_Events": [ "Succeeded" ]
+      }
+    },
+    "For_Each_Event": {
+      "type": "Foreach",
+      "foreach": "@body('Parse_JSON')?['Items']",
+      "actions": {
+        "Compose_CleanPayload": {
+          "type": "Compose",
+          "inputs": [
+            {
+              "EventId": "@item()?['Id']",
+              "Category": "@item()?['Category']",
+              "Occurred": "@{if(empty(item()?['Occurred']), utcNow(), formatDateTime(item()?['Occurred'], 'yyyy-MM-ddTHH:mm:ssZ'))}",
+              "Username": "@item()?['Username']",
+              "Message": "@item()?['Message']",
+              "RelatedDocs": "@{if(empty(item()?['RelatedDocumentIds']), '', join(item()?['RelatedDocumentIds'], ','))}",
+              "IsService": "@item()?['IsService']",
+              "UserAgent": "@item()?['UserAgent']"
+            }
+          ]
+        },
+        "HTTP_Post_To_DCE": {
+          "type": "Http",
+          "inputs": {
+            "method": "POST",
+            "uri": "https://<YourDCE-FQDN>/dataCollectionRules/<Your-DCR-ID>/streams/Custom-<YourCustomTable>_CL?api-version=2021-11-01-preview",
+            "headers": {
+              "Content-Type": "application/json"
+            },
+            "body": "@outputs('Compose_CleanPayload')",
+            "authentication": {
+              "type": "ManagedServiceIdentity",
+              "audience": "https://monitor.azure.com/"
+            }
+          },
+          "runAfter": {
+            "Compose_CleanPayload": [ "Succeeded" ]
+          }
+        }
+      },
+      "runAfter": {
+        "Parse_JSON": [ "Succeeded" ]
+      }
+    }
+  },
+  "outputs": {}
+}
