@@ -1,0 +1,94 @@
+{
+    "definition": {
+        "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2019-05-01/workflowdefinition.json#",
+        "actions": {
+            "Get_Octopus_Logs": {
+                "type": "Http",
+                "inputs": {
+                    "method": "GET",
+                    "uri": "https://YOUR_OCTOPUS_URL/api/tasks?skip=0&take=50",
+                    "headers": {
+                        "X-Octopus-ApiKey": "API-YOURKEY"
+                    }
+                },
+                "runAfter": {}
+            },
+            "Parse_Logs": {
+                "type": "ParseJson",
+                "runAfter": {
+                    "Get_Octopus_Logs": [
+                        "Succeeded"
+                    ]
+                },
+                "inputs": {
+                    "content": "@body('Get_Octopus_Logs')",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "Items": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "Id": {"type": "string"},
+                                        "Name": {"type": "string"},
+                                        "State": {"type": "string"},
+                                        "QueueTime": {"type": "string"},
+                                        "CompletedTime": {"type": ["string", "null"]},
+                                        "Duration": {"type": ["string", "null"]},
+                                        "ErrorMessage": {"type": ["string", "null"]}
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "For_Each_Log": {
+                "type": "Foreach",
+                "runAfter": {
+                    "Parse_Logs": [
+                        "Succeeded"
+                    ]
+                },
+                "foreach": "@body('Parse_Logs')?['Items']",
+                "actions": {
+                    "Send_to_Sentinel": {
+                        "type": "Http",
+                        "inputs": {
+                            "method": "POST",
+                            "uri": "https://YOUR_DCE_REGION_NAME.ingest.monitor.azure.com/dataCollectionRules/YOUR_DCR_IMMUTABLE_ID/streams/Custom-OctopusDeploy_CL?api-version=2021-11-01-preview",
+                            "headers": {
+                                "Content-Type": "application/json"
+                            },
+                            "body": {
+                                "time": "@{items('For_Each_Log')?['CompletedTime']}",
+                                "properties": {
+                                    "Id": "@{items('For_Each_Log')?['Id']}",
+                                    "Name": "@{items('For_Each_Log')?['Name']}",
+                                    "State": "@{items('For_Each_Log')?['State']}",
+                                    "QueueTime": "@{items('For_Each_Log')?['QueueTime']}",
+                                    "Duration": "@{items('For_Each_Log')?['Duration']}",
+                                    "ErrorMessage": "@{items('For_Each_Log')?['ErrorMessage']}"
+                                }
+                            }
+                        },
+                        "runAfter": {}
+                    }
+                }
+            }
+        },
+        "triggers": {
+            "Recurrence": {
+                "type": "Recurrence",
+                "recurrence": {
+                    "frequency": "Hour",
+                    "interval": 1
+                }
+            }
+        },
+        "contentVersion": "1.0.0.0",
+        "outputs": {}
+    },
+    "kind": "Stateful"
+}
